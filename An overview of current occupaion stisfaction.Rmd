@@ -1,0 +1,564 @@
+---
+title: Statistical inference with the GSS data - an overview of current occupation
+  satisfaction
+output:
+  html_document:
+    fig_height: 4
+    highlight: pygments
+    theme: spacelab
+  pdf_document: default
+---
+
+### Author: Nikola Andric | andrniko95@gmail.com
+
+## Setup
+
+### Load packages
+
+```{r load-packages, message = FALSE}
+library(ggplot2)
+library(dplyr)
+library(statsr)
+library(gridExtra)
+```
+
+### Load data
+
+
+```{r load-data}
+load("gss.Rdata")
+```
+
+
+
+* * *
+
+## Part 1: Data
+
+  The [General Social Survey (GSS)](http:/gss.norc.org/About-The-GSS) is an observational analysis performed at the University of Chicago by the National Opinion Polling Center. The GSS has been documenting sociological and attitudinal patterns since 1972 by collecting data on contemporary American society. The goal is to illustrate patterns in perceptions, habits, and characteristics, as well as constants. From 1972 to 2004, the target demographic of the GSS was people (18+) living in households in the United States who were only able to do the survey in English. From 2006 to date, however those willing to do the survey in English or Spanish have been included. 
+  
+  GSS was performed almost regularly until 1994 (except in 1979, 1981, or 1992, due to funding limitations). Since then the GSS has been carried out in even numbered years, using a dual sample design. This is primarily done by face-to-face interviews. In 2002, GSS began a computer-assisted personal interview (CAPI). Even at times when it was impossible to schedule an in-person interview with a sampled respondent, interviews were conducted by telephone.
+  
+  A updated probability sampling (block-quota sample) was used from 1972 to 1974 surveys. Full-probability household sampling was used by GSS to give each household a fair chance of being included in the survey from 1975 to 2002. Thus, the GSS is self-weighting for household-level variables.
+  
+  In order to keep the design impartial, GSS began using a two-stage non-response and weight-adjusted sub-sampling design from 2004. Cases from which no response was obtained during the initial stage of the field phase are subsampled, and efforts are concentrated on achieving cooperation from this subset, thereby reducing both response error and non-response bias. Subsampling of segments was carried out using a basic systematic sorting method.
+  
+  Weight variables are used to modify the improvements in sampling, e.g. over-representation of blacks in 1972, under-representation of males for all full-probability samples, under-representation of males in full-time current occupations for block-quota samples, and a substantial improvement in coverage of Mormons since the 1980 survey frame (controlled first-stage selection procedure) was introduced (this was due to the addition of a primary sampling unit in Utah).
+  
+  The GSS is the outcome of a historical observational analysis (because the results collected are events that have taken place) and not an experimental study, so there is no random assignment. One cannot draw causal inference from the data (one can only associate). GSS uses random sampling as explained above; thus the data is generalisable. It is simply said that since there is no real random assignment, only random sampling, there is no casual relationship but only association and the data is generalizable
+
+* * *
+
+## Part 2: Research question
+
+  The goal of this study is to investigate a relationship between current occupation satisfaction and whether the respondent is self-employed or working for someone else. The analysis is relying on the 2012 GSS survey report.
+  
+  The following questions will be taken into account and answered:
+  
+1.) Is there a discrepancy of the population percentage between self-employed Americans who are satisfied with their current occupation versus others who work for someone else and are satisfied with their current occupations?
+
+2.) Is the median family income of self employed Americans who are satisfied with their current occupation greater than that of Americans who work for someone else and are satisfied with their current occupations?
+
+3.) What is the median family income of self-employed Americans who are satisfied with their current occupation and of those Americans who work for someone else and are satisfied with their current occupations? Is there a difference between the two incomes?
+
+
+
+### Motivation
+  Due to the fact that the author is at a crossroad, career-wise. It is of great interest to the author whether  occupation satisfaction is based on the employment status or merely on the essence of the occupation one is engaged in , regardless if one works for someone else or is self-employed. Also, as the author remarks, income is important, and it is of interest to study the median/typical family income of self-employed adult individuals, and adult individuals who work who someone else.
+
+* * *
+
+## Part 3: Exploratory data analysis
+
+**The results of the analysis are generalized to adults, aged 18 years and above, living in households in the United States, who are able to do the survey in English or Spanish.**
+
+  For the goal of this analysis, the missing results (NA values) will be excluded.
+
+  Before the analysis commences, variables of importance for this study will be selected and a new dataframe will be created, called 'gssc'
+
+```{r}
+gssc<-gss %>%
+  filter(year=='2012')%>%
+  select(satjob,wrkslf,coninc,income06)
+```
+
+Using `summary(gssc)`, a summary of the data will be provided and `str(gssc)` shows the structure. Having insight in the values which make up the variables (type and structure) eases the analysis.
+```{r}
+summary(gssc)
+```
+
+```{r}
+str(gssc)
+```
+Values contained in gssc are `satjob` (current occupation satisfaction in general; 4 levels), `wrkslf`(self employed or works for somebody; 2 levels), `coninc`(an individuals income; integers) and income06(total family income; 26 levels).
+
+To answer the research question, the information needed is the amount and percentage of self-employed respondents and of those who work for someone else who are satisfied (very and moderately) and dissatisfied (very and little) with their current occupations.
+
+Firstly, the count is calculated:
+```{r}
+gssc %>%
+  filter(!is.na(wrkslf),!is.na(satjob)) %>%
+  group_by(wrkslf) %>%
+  count(satjob)
+```
+Then, a contingency table is created using the results above.
+
+```{r}
+conting<-matrix(c(97,45,11,2,626,486,121,43),ncol=2,nrow=4)
+colnames(conting)<-c('Self-Employed','Someone Else')
+rownames(conting)<-c('Very Sat.','Mod. Sat.','A little Dissat.','Very Dissat.')
+conting.table<-as.table(conting)
+conting.table
+```
+The result are visualized using a mosaic plot and a bar chart.
+
+```{r}
+mosaicplot(conting.table,main='Relationship of Level of current occupation Satisfaction and Employment Status',color='skyblue')
+```
+
+```{r}
+gssc %>%
+  filter(!is.na(satjob),!is.na(wrkslf)) %>%
+  ggplot(aes(wrkslf,fill=satjob)) + geom_bar() + 
+  labs(title="Relationship between Employment Status and Level of current occupation Satisfaction",x="Employment Status") +
+  theme(axis.title.y=element_blank(),axis.text.y=element_blank(), axis.ticks.y=element_blank())
+
+```
+
+
+According to a visual analysis, more than 50% of self-employed Americans are very satisfied with their current occupations, and approximately 50% of those who work for someone else are satisfied with their current occupations.
+
+The goal now is to find the column proportion which tells us the proportion of self-employed respondents who either are or are not satisfied with their current occupations, the same for those who work for someone else.
+
+```{r}
+conting.table %>%
+  prop.table(margin=2) %>%
+  round(3)
+```
+
+The percentage of self-employed respondents who are very dissatisfied with their current occupation is very small, 1.3%; whereas 3.3% of respondents who work for someone else are very dissatisfied with their current occupation.
+
+Before generalizing the results, a chi-square test of independence will be performed; although, from the plots and summaries, a relationship between respondents employment status and current occupation satisfaction level can be seen. This will be done in the inference section.
+
+#### Proportion of Self-Employed Americans who are Satisfied with their current occupations vs. those who are employed by Someone Else and are Satisfied with their current occupations
+
+To enhance the quality and ease of this analysis, all respondents who are satisfied with their current occupations ('Very Satisfied', 'Moderately Satisfied') will be grouped together as 'Satisfied'; all respondents who are not satisfied with their current occupations('A little dissatisfied', Very Dissatisfied') will be grouped as 'Dissatisfied'.
+
+A new variable 'lsatjob' will carry that information, and will be added to the 'gssc' dataframe.
+
+```{r}
+gssc<-gssc %>%
+  mutate(lsatjob=ifelse(satjob=='Very Satisfied','Satisfied',ifelse(satjob=='Mod. Satisfied','Satisfied','Dissatisfied')))
+
+```
+```{r}
+gssc %>%
+  filter(!is.na(wrkslf),!is.na(lsatjob)) %>%
+  group_by(wrkslf)%>%
+  count(lsatjob)
+```
+
+The proportions of self-employed respondents who are satisfied with their current occupations and the same for those who work for someone else are of interest for this study.
+
+```{r}
+gssc %>%
+  filter(!is.na(wrkslf),!is.na(lsatjob))%>%
+  group_by(wrkslf)%>%
+  summarise(prop=sum(lsatjob=='Satisfied')/n())
+```
+
+
+**
+91.6% of self-employed respondents are satisfied with their current occupations, while the percentage for those working for someone else is somewhat lower, at 87.1%.
+**
+
+
+In the inference section, a hypothesis test and confidence interval will be conducted with the goal of estimating the existence of a difference in the proportion of self-employed respondents and those employed for someone else, who are both satisfied with their current occupations.
+
+#### Relationship between Income, Employment Status and Level of current occupation Satisfaction
+
+A significant proportion of respondents who both work for someone else and are self-employed are satisfied with their current occupation. The income level for current occupation satisfaction with respect to employment status(self-employed or working for someone else) will be examined. The focus, as pointed out in the research question, is on the median family income of the respondents who are very satisfied with their current occupations.
+
+```{r}
+Plot1 <- gssc %>%
+  filter(wrkslf=='Self-Employed',!is.na(satjob),!is.na(income06)) %>%
+  ggplot(aes(income06,wrkslf,fill=satjob))+geom_col()+coord_flip()+labs(x='Total Family Income',y='Self-Employeed Respondents')+theme(legend.position='none',axis.text.x=element_blank(),axis.ticks.x=element_blank())
+
+
+Plot2<-gssc %>%
+  filter(wrkslf=='Someone Else',!is.na(satjob),!is.na(income06))%>%
+  ggplot(aes(income06,wrkslf,fill=satjob))+geom_col()+coord_flip()+labs(x='Total Family Income',y='Respondents who work for someone else')+theme(legend.justification=c(1,0),axis.text.x=element_blank(),axis.ticks.x=element_blank(),axis.title.x=element_text(hjust=0.9))
+
+grid.arrange(Plot1, Plot2, ncol = 2, top = "Income Group for different Employment Status with respect to their Levels of current occupation Satisfaction")
+
+```
+
+Solely from the bar chart,it can be seen that for both the self-employed respondents and for the one who are currently working for someone else, the percentage of the respondents who are very and moderately and very satisfied with their current occupations increases, with several 'A little Satisfied' with their current occupations (With an exception of self-employed respondents who earn  $110.000 or more).
+
+For the majority of self-employed respondents, they are satisfied with their current occupations, regardless of the amount of their overall family income with several who are 'A little Dissatisfied' and several 'Very Dissatisfied'. Variables such as whether the respondent if single or married, employment status of the rest of the family, the type of current occupation can play a major role in the level of current occupation satisfaction.
+
+To get a better picture of the total family income group of self-employed respondents and those who work for someone else who fall in the 'Very Satisfied' category.
+
+```{r}
+gssc %>%
+    
+  filter(satjob=='Very Satisfied',!is.na(wrkslf),!is.na(income06)) %>%
+  ggplot(aes(income06,fill=wrkslf))+geom_bar()+coord_flip()+labs(title='Income Breakdown of Very Satisfied respondents with regard to their employment status',x='Income')+theme(plot.title=element_text(hjust=0.5),axis.text.x=element_blank(),axis.title.x=element_blank(),axis.ticks.x=element_blank())
+```
+
+To determine the median family income (adjusted for inflation) for both employment statuses that are very satisfied with their current occupations, a histogram will be plotted, and summary statistics with the goal of determining the shape, center and variability of the data will be carried out.
+
+Note: 97 out of the 155 self-employed respondents and 626 out of 1276 of those who work for someone else are very satisfied with their current occupations.
+
+```{r}
+Plot3 <- gssc %>%
+  filter(satjob == "Very Satisfied", wrkslf == "Self-Employed", !is.na(coninc)) %>% 
+  ggplot(aes(coninc)) + geom_histogram() +
+  labs(subtitle = "Self-Employed", x = "Family Income")
+Plot4 <- gssc %>%
+  filter(satjob == "Very Satisfied", wrkslf == "Someone Else", !is.na(coninc)) %>% 
+  ggplot(aes(coninc)) + geom_histogram() +
+  labs(subtitle = "Work for Someone Else", x = "Family Income")
+Plot5 <- gssc %>%
+  filter(satjob == "Very Satisfied", wrkslf == "Self-Employed", !is.na(coninc)) %>% 
+  ggplot(aes(sample = coninc, color = wrkslf)) + stat_qq() +
+  labs(subtitle = "Self-Employed", y = "Family Income") + 
+  theme(legend.position = "none")
+Plot6 <- gssc %>%
+  filter(satjob == "Very Satisfied", wrkslf == "Someone Else", !is.na(coninc)) %>% 
+  ggplot(aes(sample = coninc, color = wrkslf)) + stat_qq() +
+  labs(subtitle = "Work for Someone Else", y = "Family Income") + 
+  theme(legend.position = "none")
+grid.arrange(Plot3, Plot4, Plot5, Plot6, ncol = 2, top = "Distribution of Family Income Based on Employment Status of Very Satisfied Respondents")
+```
+
+
+Both of the sample distribution show a strong right-skew; a typical family income corresponds to the median of the distribution. The IQR can better clarify the variability of both of the distributions.
+
+A boxplot will visualize the samples.
+
+```{r}
+gssc %>%
+  filter(satjob=='Very Satisfied',!is.na(wrkslf),!is.na(coninc))%>%
+  ggplot(aes(wrkslf,coninc))+geom_boxplot()+labs(x='Employment Status',y='Family Income')
+```
+
+Again, a strong right-skew can be seen. The outliers are above 150,000 USD.The variability of the family income of self-employed respondents(slightly above 50,000 USD) is more than of the respondents who are working for someone else(below 50,000 USD).
+
+A summary statistic will shed more light on the data.
+
+```{r}
+gssc %>%
+  filter(satjob == "Very Satisfied", wrkslf == "Self-Employed", !is.na(coninc)) %>% 
+  summarise(mean = mean(coninc), median = median(coninc), sd = sd(coninc), IQR = IQR(coninc), 
+            quant1 = quantile(coninc, 0.25), quant3 = quantile(coninc, 0.75))
+# Count
+gssc %>%
+  filter(satjob == "Very Satisfied", wrkslf == "Self-Employed", !is.na(coninc)) %>% 
+  count(wrkslf)
+```
+
+A self-employed American who is very satisfied with his current occupation has a median family income of 51,705 USD, whereby the variability is 70,855 USD. The bottom 25% of them have an income of 21,065 USD and the top 25% 91,920 USD. Their median family income is 70,911.8 USD.
+
+```{r}
+gssc %>%
+  filter(satjob == "Very Satisfied", wrkslf == "Someone Else", !is.na(coninc)) %>% 
+  summarise(mean = mean(coninc), median = median(coninc), sd = sd(coninc), IQR = IQR(coninc), 
+            quant1 = quantile(coninc, 0.25), quant3 = quantile(coninc, 0.75))
+#Count
+gssc %>%
+  filter(satjob == "Very Satisfied", wrkslf == "Someone Else", !is.na(coninc)) %>% 
+  count(wrkslf)
+```
+
+On the other hand, an American who works for someone else, and is very satisfied with his current occupation, has a median family income of 42,130 USD (lower than self-employed ones), whereby the variability is 55,535 USD (higher than self-employed). The bottom 25% have an income of 21,065 USD and the top 25% 76,600 USD (which are equal and less than, respectively, than their self-employed counterparts).
+
+The next section will investigate whether the real family income of self-employed Americans who are very satisfied with their employment is in fact greater than that of those who work for someone else, and who are also very satisfied with their current occupations. A hypothesis test will evaluate the existence of a disparity on their typical incomes.
+
+## Part 4: Inference
+
+
+### Relationship between current occupation satisfaction and Employment Status (Respondents that are Self-Employed and those who Work for Someone Else)
+
+To answer the question whether there is a relationship between current occupation satisfaction and employment status, a Chi-Square Test of Independence will be carried out. The table contains two categorical variables, and at least one of them has more than two levels, which makes the Chi-Square Test appropriate.
+
+A hypothesis for the test will be defined as:
+
+
+H`0` (nothing is going on): current occupation satisfaction and employment status are independent. current occupation satisfaction does not vary by employment status.
+
+H`A` (something is going on): current occupation satisfaction and employment status are dependent. current occupation satisfaction does vary by employment status.
+
+Checking the conditions for the Chi-Square Test:
+
+*1.* **Independence:** The sampled observations are independent: Data was randomly sampled (✓); Each group makes up less than 10% of the population of Americans who are either self-employed or work for someone else (✓); Each case contributes to only one cell in the table. (✓)
+
+*2.* **Sample Size** Each particular cell must have at least 5 expected cases. (?). This condition is still to be confirmed. The values in the contingency table represent only the observed counts. The expected counts can be calculated by applying the Pearson's Chi-Square Test and then `..$expected` can be used to get the counts.
+
+```{r}
+chisq<-chisq.test(conting.table,correct = FALSE)
+chisq
+```
+
+At the (standard) 5% significance level, the p-value(0.0128) is less than 0.05, and thus **the H`0` is to be rejected**. It would seem that the data do provide convincing evidence that current occupation satisfaction does vary by respondent's employment status; however, it is still do be confirmed if all expected counts have at least 5 cases.
+
+```{r}
+chisq$expected
+```
+ All of the cells do have more than 5 cases in the expected counts, except for the count of respondents who are both self-employed and unhappy with their employment, which is less than 5 (4.87). It can be chosen to be ignored as it is to a good approximation equal to 5. Due to the fact that it is just a single cell, and that the data is made up of a 2 by 4 table, the results of the chi-square test above can be accepted. However, there is a vivid possibility of a type 1 error (of rejecting the H`0` when it actually is true).
+ 
+There are two approaches which can be taken here: grouping the last two rows into 'dissatisfied' and performing the `inference` test, or using the bootstrap test.
+
+Both of the methods will be displayed to ensure that the sample size condition is met and to reduce a Type 1 Error.
+
+***Bootstrapping***
+
+The bootstrap method will be used to test our hypothesis, for the reasons stated above.
+
+```{r}
+gssc %>%
+  filter(!is.na(satjob),!is.na(wrkslf))%>%
+  inference(y=wrkslf,x=satjob,type='ht',statistic='proportion',method='simulation',alternative='greater',boot_method='perc',nsim=10000)
+```
+
+
+A p-value of 0.019 was obtained, and although it is greater than the previous one, it is still under the significance level of 5%. Once again, **H`0` is to be rejected**, confirming the conclusion from the Pearson's Chi-Square Test above.
+
+To further confirm the result, the other suggested method will be presented.
+
+***Collapsing the Cells due to the <5 Expected Count*** 
+
+A new variable `csatjob` will be created and added to the dataframe `gssc`
+
+```{r}
+gssc<-gssc%>%
+  mutate(csatjob=ifelse(satjob=='Very Satisfied','Very Satisfied',ifelse(satjob=='Mod. Satisfied','Mod.Satisfied','Dissatisfied')))
+
+```
+
+Checking whether all cells contain enough cases:
+```{r}
+gssc %>% 
+  filter(!is.na(wrkslf), !is.na(csatjob)) %>% 
+  group_by(wrkslf) %>% 
+  count(csatjob)
+```
+Since all of the conditions have now been met, the hypothesis test that employment status and current occupation satisfaction are associated at 5% significance level can be performed.
+```{r}
+gssc%>%
+  filter(!is.na(csatjob),!is.na(wrkslf))%>%
+  inference(y=wrkslf,x=csatjob,type='ht',statistic='proportion',method='theoretical',alternative='greater')
+```
+
+The p-value has reduced and thus, the possibility of a Type 1 Error has also been reduced.
+
+Finally, it can be said that **At the 5% significance level, the p-value is less than 0.5 and thus, the H`0` can be rejected. In other words, the data provide convincing evidence that current occupation satisfaction and employment status are dependent as stated by the alternative hypothesis.'**
+
+
+#### Difference between those who are Self-Employed and are Satisfied with their current occupations and those who work for Someone Else and are Satisfied with their current occupations
+
+The next question is to find examine the possibility of a discrepancy between the population proportions of self-employed Americans who are satisfied with their current occupations, and those who work for someone else and are also satisfied with their current occupations.
+
+According to the data, 91,6% of self-employer respondents have reported to be satisfied with their current occupations, and 87.1% of respondents who work for someone else have reported to be satisfied.
+
+Firstly, a 95% confidence interval will be used to estimate the difference.
+
+*Parameter of interest:* Difference between all self-employed Americans who are satisfied with their current occupations and those who work for someone else that are also satisfied with their current occupations. (%p%`self-employed`-%p%`someone else`)
+
+*Point estimate: * Difference between the sampled self-employed respondents who are satisfied with their current occupations and sampled respondents who work for someone else who are also satisfied with their current occupations. (p^`self-employed`-p^`someone else`)
+
+
+Checking the conditions for the comparing two independent proportions:
+
+*1.* Independence: random sample: both populations were sampled at random (✓);the 10% condition (✓)
+
+*2.* Sample size/skew: Self-employed: 142 successes and 13 failures (✓); Someone else: 1112 successes and 164 failures (✓)
+
+Since *2.* is met, it can be concluded that the sampling distribution of the difference between the two proportions is nearly normal. Thus, a 95% confidence interval can be created and interpreted.
+
+```{r}
+gssc %>%
+  filter(!is.na(lsatjob), !is.na(wrkslf)) %>%
+  inference(y = lsatjob, x = wrkslf, type = "ci", statistic = "proportion", success = "Satisfied",method = "theoretical")
+```
+
+It can be concluded, with 95% confidence, that the population proportions of self-employed Americans who are satisfied with their current occupations are between 0.27% less to 9.2% more than Americans who who work for someone else that are also satisfied with their current occupations.
+
+Based on the confidence interval calculated above, should it be expected to find a significant difference(at the same significance level) between the population proportions of self-employed Americans who are satisfied with their current occupations  and Americans who work for someone else who are also satisfied with their current occupations.
+
+$p$`self-employed`-$p$`someone else`=(-0.0027,0.092)
+
+H`0`: $p$`self-employed`-$p$`someone else`=0
+
+Since the null value is included in the interval, the H`0` cannot be rejected and thus, the answer to the above gives question is no. *From the data gathered, there is no significant difference between the population proportions of self-employed Americans at large that are satisfied with their current occupations and Americans who work for someone else that are satisfied with their current occupations.*
+
+To confirm the above result, a hypothesis test at the 5% significance level can be conducted.
+
+H`0`:$p$`self-employed`-$p$`someone else`=0
+
+H`A`:$p$`self-employed`-$p$`someone else`!=0
+
+Checking the conditions for the hypothesis test to compare two proportions:
+
+*1.* Independence: 
+  *within groups:* Random sample(✓) , the 10% condition(✓);
+  *between groups:* It is not expected for the groups to be dependent.(✓)
+  
+*2.* Sample size/skew: A pooled proportion is needed to check the success-failure condition(success: np^`pool`>=10; failure: n(1-p^`pool`)>=10)
+
+```{r}
+phat_pool=(142+1112)/(142+13+1112+164)
+phat_pool
+
+#self-employed success
+155*phat_pool
+#self-employed failure
+155*(1-phat_pool)
+#someone else success
+1276*phat_pool
+#someone else failure
+1276*(1-phat_pool)
+```
+*2.*(✓) It can be assumed that the sampling distribution of the difference between the two proportions is nearly normal.
+
+As all of the conditions have been met, the hypothesis test can be performed
+
+```{r}
+gssc %>%
+  filter(!is.na(lsatjob),!is.na(wrkslf))%>%
+  inference(y=lsatjob,x=wrkslf,type='ht',statistic='proportion',success='Satisfied',method='theoretical',alternative='twosided')
+```
+
+Since the p-value (0.118) is greater than 0.05, the null hypothesis cannot be rejected. *The data do not provide strong evidence that the population proportion of self-employed Americans who are satisfied with their current occupations is different from those who work for someone else and are satisfied with their current occupations.* This supports the conclusion from the confidence interval.
+
+####Difference in the Median and Typical Family Income of Self-Employed Americans who are very Satisfied  with their current occupations and of those who Work for Someone Else and are very Satisfied with their current occupations. 
+
+
+The goal is to figure out whether the median family income of self-employed Americans who are very satisfied with their current occupations is greater tan of those who are also satisfied with their current occupations, but work for someone else. 
+
+According to the data, the median family income of self-employed respondents who are very satisfied with their current occupations is 70,911.8 USD and of those who work for someone else and are also vary satisfied with their current occupations is 56,165.08 USD.
+
+To begin, a 90% confidence interval to estimate the difference will be used. A 90% confidence interval has been chosen so that the findings are in sync with the hypothesis test, which will be one-sided at the 5% significance level.
+
+**Parameter of Interest**: Difference between the median family incomes of self-employed Americans who are very satisfied with their current occupations and those who work for someone else who are also very satisfied with their current occupations. mu`self-employed`-mu`someone else`.
+
+
+**Point Estimate:** Difference between the median family income of sampled self-employed respondent Americans who are very satisfied with their current occupations and the sampled Americans who work for someone else and are also very satisfied with their current occupations.
+$x?$`self-employed` - $x?$`someone else`
+
+
+Checking the conditions for comparing two independent means:
+
+*1.* Independence:  within groups: random sample (✓); Less than 10% of actual population (✓); between groups: both groups are independent of each other (✓)
+
+*2.* Sample size/skew: Both groups are skewed to the right; the sample sizes of 81 and 578 suggest to a reasonability of using a t-distribution to model each mean separately (✓)
+
+
+As all of the conditions have been bet, the estimation of the difference, using a 90% confidence interval can be performed.
+
+```{r}
+gssc %>%
+  filter(satjob=='Very Satisfied',!is.na(coninc),!is.na(wrkslf))%>%
+  inference(y=coninc,x=wrkslf,type='ci',statistic='mean',method='theoretical',conf_level=0.90)
+```
+
+From the above-given result, with a 90% confidence it can be claimed that the median family income of Americans who are self-employed and who are very satisfied with their current occupation is 2,635.08 USD to 26,858.36 USD higher than that of American who work for someone else and who are also very satisfied with their current occupations.
+
+Based solely on the confidence interval given above, is it to be expected to find a statistically significant (at the same significance level) difference between the median family incomes of self-employed Americans who are very satisfied with their current occupations and Americans who work for someone else and are also very satisfied with their current occupations.
+
+mu`self-employed`-mu`someone else`=(2635.0838,26858.362)
+
+H`0`: mu`self-employed`-mu`someone else`=0 (the null value is not contained in the confidence interval and thus, the H`0` can be rejected. )
+
+**According to the data, the median family income of self-employed Americans who are satisfied with their current occupations is greater than the one of Americans who work for someone else and are also very satisfied with their current occupations.**
+
+
+To confirm the result, a hypothesis test at a 5% significance level will be performed.
+
+Defining the hypotheses:
+
+H`0`:mu`self-employed`=mu`someone else` (The median family incomes are equal)
+
+H`A`:mu`self-employed`>mu`someone else` (the median family income of self-employed Americans who are very satisfied with their current occupations is greater)
+
+It has been concluded that the conditions for inference  for comparing two means have been met, and thus a hypothesis test follows.
+
+```{r}
+gssc%>%
+  filter(satjob=='Very Satisfied',!is.na(coninc),!is.na(wrkslf))%>%
+  inference(y=coninc,x=wrkslf,type='ht',statistic='mean',method='theoretical',alternative='greater')
+```
+
+The p-value(0.023) is less than 0.05 and thus, the null hypothesis can be rejected. 
+**The data provide convincing evidence that the median family income of self-employed Americans who are very satisfied with their current occupations is greater than those who work for someone else and are very satisfied with their current occupations.**
+
+***Typical Family Income of Self-Employed Americans who are Very Satisfied with their current occupations vs. those who Work for Someone Else that are very Satisfied with their current occupations***
+
+Both sample distributions seem to be right-skewed. The bootstrap method (for comparing two medians) will be used with the goal of estimating the existence of a difference in the typical family incomes of self-employed Americans who are very satisfied with their current occupations and Americans who work for someone else and are also very satisfied with their 
+
+From the data, it can be concluded that the median family income of self-employed respondents who are very satisfied with their current occupations is 51.705 USD and that of respondents who work for someone else  and are also very satisfied with their current occupations  is somewhat lower, at 42.130 USD.
+
+The difference in the median family incomes will be estimated using a 95% confidence interval and a hypothesis test at the 5% significance level, using the standard error method, will be performed. It has been already established that the conditions for inference have been met.
+
+**Parameter of Interest:** The difference between the median family incomes of self-employed Americans who are very satisfied with their current occupations and Americans who work for someone else and are also very satisfied with their current occupations.
+
+Pop_median`self-employed`-Pop_median`someone else
+
+
+**Point Estimate:** The difference between the median family incomes of self-employed respondents who are very satisfied with their current occupations and respondents who work for someone else and are also very satisfied with their current occupations.
+
+med`self-employed`-med`someone else`
+
+***Bootstrapping at a 95% Confidence Interval***
+
+```{r}
+gssc %>%
+  filter(satjob=='Very Satisfied',!is.na(coninc),!is.na(wrkslf))%>%
+  inference(y=coninc,x=wrkslf,type='ci',statistic='median',method='simulation',nsim=10000,boot_method='se')
+```
+
+
+
+*From the above given results, it can be said, with 95% confidence, that the typical family income of self-employed Americans who are very satisfied with their current occupations is between is between 4,583.73 USD less and 23,733.73 USD more than that of Americans who work for someone else and are also very satisfied with their current occupations.*
+
+On the sole basis of the above calculated Confidence Interval should it be expected, for a significant difference between the median family income of self-employed Americans who are very satisfied with their current occupations and the Americans who work for someone else and who are also satisfied with their current occupations, to be found?
+
+Pop_median`self-employed`-Pop_median`someone else`=(-458.7323,23733.7323)
+
+H`0`: Pop_med`self-employed`-Pop_med`someone else`=0.
+
+Since null value (0) is to be found in the confidence interval, the H`0` cannot be  rejected.
+
+It is to be concluded that **according to the data, there is no significant difference between the typical family income of self-employed Americans at large that are very satisfied with their current occupations and Americans who work for someone else are very satisfied with their current occupations.**
+
+To confirm the above given result, a hypothesis test at the 5% significance level using the bootstrap method will be conducted, with the goal of evaluating the existence of a difference in the median family incomes of self-employed Americans who are very satisfied with their current occupations and Americans who work for someone else and are also satisfied with their current occupations.
+
+Defining the hypothesis for the test:
+
+H`0`: Pop_med`self-employed`=Pop_med`somoeone else`
+
+H`A`: Pop_med`self-employed`!=Pop_med`someone else`
+
+```{r}
+gssc %>%
+  filter(satjob=='Very Satisfied',!is.na(coninc),!is.na(wrkslf)) %>%
+  inference(y=coninc,x=wrkslf,type='ht',statistic='median',method='simulation',alternative='twosided',nsim=10000,boot_method='se')
+```
+
+
+The p-value(0.055) is greater than the significance level 0.05, the H`0` cannot be  rejected. It is to be concluded that **the data do not provide strong evidence that the median family income of self-employed Americans who are very satisfied with their current occupations is different from Americans who work for someone else and are very satisfied with their current occupations.**
+ 
+## Part 5: Conclusion
+
+Upon performing analysis and inference, the following can be concluded for the year 2012:
+
+**1.** The data provide convincing evidence that current occupation satisfaction does vary by respondent's employment status. They can be seen as dependent.
+
+**2.** The data do not provide strong evidence that the population proportion of self-employed Americans who are satisfied with their current occupations is different from Americans who work for someone else and are also satisfied with their current occupations.
+
+**3.** THe data provide convincing evidence that the median family income of self-employed Americans who are very satisfied with their current occupations is greater than of Americans who work for someone else and are also very satisfied with their current occupations
+
+**4.** The data do not provide strong evidence that the median family income if self-employed Americans who are very satisfied with their current occupations is different from Americans who work for someone else and are also very satisfied with their current occupations.
+
+
+
